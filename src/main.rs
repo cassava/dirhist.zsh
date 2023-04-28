@@ -61,7 +61,7 @@ impl HistoryFile {
 
     pub fn read_commands_with(&mut self, dir: impl Into<String>, substring: impl Into<String>) -> Box<dyn DoubleEndedIterator<Item = String> + '_> {
         let mut set = HashSet::new();
-        Box::new(self.read_all_with(dir, substring).rev().filter_map(
+        let vec: Vec<_> = self.read_all_with(dir, substring).rev().filter_map(
             move |e| {
                 if set.contains(&e.command) {
                     None
@@ -70,7 +70,8 @@ impl HistoryFile {
                     Some(e.command)
                 }
             }
-        ).rev())
+        ).collect();
+        Box::new(vec.into_iter().rev())
     }
 }
 
