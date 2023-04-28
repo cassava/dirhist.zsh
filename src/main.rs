@@ -46,7 +46,7 @@ impl HistoryFile {
         let dir = dir.into();
         let (dir_entries, other_entries): (Vec<_>, Vec<_>) =
             self.read_all().partition(|e| e.directory == dir);
-        dir_entries.into_iter().chain(other_entries.into_iter())
+        other_entries.into_iter().chain(dir_entries.into_iter())
     }
 
     pub fn read_all_with(&mut self, dir: impl Into<String>, substring: impl Into<String>) -> Box<dyn Iterator<Item = HistoryEntry> + '_> {
