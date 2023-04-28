@@ -26,7 +26,7 @@ impl HistoryFile {
         &self.path
     }
 
-    pub fn read_all(&mut self) -> impl Iterator<Item = HistoryEntry> + '_ {
+    pub fn read_all(&mut self) -> impl DoubleEndedIterator<Item = HistoryEntry> + '_ {
         if self.buffer.is_empty() {
             let mut file = std::fs::File::open(&self.path).unwrap();
             file.read_to_end(&mut self.buffer).unwrap();
@@ -42,16 +42,16 @@ impl HistoryFile {
     pub fn read_all_by_dir(
         &mut self,
         dir: impl Into<String>,
-    ) -> impl Iterator<Item = HistoryEntry> + '_ {
+    ) -> impl DoubleEndedIterator<Item = HistoryEntry> + '_ {
         let dir = dir.into();
         let (dir_entries, other_entries): (Vec<_>, Vec<_>) =
             self.read_all().partition(|e| e.directory == dir);
         other_entries.into_iter().chain(dir_entries.into_iter())
     }
 
-    pub fn read_all_with(&mut self, dir: impl Into<String>, substring: impl Into<String>) -> Box<dyn Iterator<Item = HistoryEntry> + '_> {
+    pub fn read_all_with(&mut self, dir: impl Into<String>, substring: impl Into<String>) -> Box<dyn DoubleEndedIterator<Item = HistoryEntry> + '_> {
         let (dir, substring) = (dir.into(), substring.into());
-        let entries: Box<dyn Iterator<Item = HistoryEntry>> = if dir.is_empty() {
+        let entries: Box<dyn DoubleEndedIterator<Item = HistoryEntry>> = if dir.is_empty() {
             Box::new(self.read_all().filter(move |e| e.command.starts_with(&substring)))
         } else {
             Box::new(self.read_all_by_dir(dir).filter(move |e| e.command.starts_with(&substring)))
@@ -59,9 +59,9 @@ impl HistoryFile {
         entries
     }
 
-    pub fn read_commands_with(&mut self, dir: impl Into<String>, substring: impl Into<String>) -> Box<dyn Iterator<Item = String> + '_> {
+    pub fn read_commands_with(&mut self, dir: impl Into<String>, substring: impl Into<String>) -> Box<dyn DoubleEndedIterator<Item = String> + '_> {
         let mut set = HashSet::new();
-        Box::new(self.read_all_with(dir, substring).filter_map(
+        Box::new(self.read_all_with(dir, substring).rev().filter_map(
             move |e| {
                 if set.contains(&e.command) {
                     None
@@ -70,7 +70,7 @@ impl HistoryFile {
                     Some(e.command)
                 }
             }
-        ))
+        ).rev())
     }
 }
 
